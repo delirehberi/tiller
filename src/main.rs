@@ -14,8 +14,13 @@ struct Config{
     repo_path: String,
 }
 const APP_NAME: &str = "tiller";
+const APP_VERSION: &str = "v0.0.1";
 
 fn main() -> io::Result<()> {
+    
+    let args: Vec<String> = std::env::args().collect();
+    check_args(&args)?;
+
     let config = config()?;
 
     let Config { editor, til_folder, repo_path } = config;
@@ -107,4 +112,20 @@ fn get_content(editor: String) -> io::Result<String>{
         .expect("Failed to open editor");
 
     read_to_string(temp_path)
+}
+
+fn check_args(args: &[String]) ->io::Result<()> {
+        match args.get(1) {
+            Some(t) => run(&t, &args[2..]),
+            _ => Ok(())
+        }
+}
+
+fn run(command: &str, args: &[String])-> io::Result<()>{
+    match command {
+        "--version" => println!("{} Version {}",APP_NAME, APP_VERSION),
+        _ => println!("Command is not registered {}",command)
+    }
+
+    std::process::exit(1)
 }
