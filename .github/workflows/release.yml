@@ -1,7 +1,11 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - master 
+      - dev
     tags:
       - 'v*.*.*'
 
@@ -11,21 +15,27 @@ jobs:
 
     strategy:
       matrix:
-        target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu]
+        include:
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64
+            container: ubuntu:18.04
+          - os: ubuntu-20.04
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64
+          - os: ubuntu-20.04
+            target: arm-unknown-linux-gnueabihf
+            code-target: linux-armhf
+          - os: macos-11
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+          - os: macos-11
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-
-      - name: Install dependencies for cross-compilation
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
@@ -39,6 +49,25 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64
+            container: ubuntu:18.04
+          - os: ubuntu-20.04
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64
+          - os: ubuntu-20.04
+            target: arm-unknown-linux-gnueabihf
+            code-target: linux-armhf
+          - os: macos-11
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+          - os: macos-11
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
 
     steps:
       - name: Checkout repository
@@ -47,12 +76,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: tiller-x86_64-unknown-linux-gnu
-          path: tiller-x86_64-unknown-linux-gnu
-      - uses: actions/download-artifact@v2
-        with:
-          name: tiller-aarch64-unknown-linux-gnu
-          path: tiller-aarch64-unknown-linux-gnu
+          name: tiller-${{ matrix.target }}
+          path: tiller-${{ matrix.target }}
 
       - name: Create release
         id: create_release
@@ -65,23 +90,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload x86_64 binary to release
+      - name: Upload ${{matrix.target}} binary to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: tiller-x86_64-unknown-linux-gnu/tiller
-          asset_name: tiller-x86_64-unknown-linux-gnu
+          asset_path: tiller-${{matrix.target}}/tiller
+          asset_name: tiller-${{matrix.target}}
           asset_content_type: application/octet-stream
 
-      - name: Upload aarch64 binary to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: tiller-aarch64-unknown-linux-gnu/tiller
-          asset_name: tiller-aarch64-unknown-linux-gnu
-          asset_content_type: application/octet-stream
 
