@@ -3,6 +3,8 @@
 Tiller is a command-line application to help manage your Today I Learned (TIL) notes. 
 It automates the process of creating, and committing new TIL entries using your preferred text editor and Git.
 
+Its working with Hugo and you can see my til layout from [my blog repo](https://github.com/delirehberi/hugo-emrexyz/)
+
 ## Features
 
 - Opens your preferred text editor to create a new TIL entry.
