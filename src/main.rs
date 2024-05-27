@@ -3,11 +3,13 @@ use std::io::{self,Write};
 use std::process::Command;
 use tempfile::NamedTempFile;
 use chrono::Local;
-use serde::{Deserialize};
+use serde::{Deserialize,Serialize};
 use serde_json::from_str;
+use serde_json::to_string;
 use std::fs::read_to_string;
 
 #[derive(Deserialize)]
+#[derive(Serialize)]
 struct Config{
     editor: String,
     til_folder: String,
@@ -124,8 +126,49 @@ fn check_args(args: &[String]) ->io::Result<()> {
 fn run(command: &str, args: &[String])-> io::Result<()>{
     match command {
         "--version" => println!("{} Version {}",APP_NAME, APP_VERSION),
+        "--setup" => setup(args)?,
         _ => println!("Command is not registered {}",command)
     }
 
     std::process::exit(1)
+}
+
+fn setup(args: &[String]) -> io::Result<()>{
+   if args.len() == 0 {
+       create_default_files()?
+           println!("default configuration file is in ~/.config/tiller/config.json");
+           std::process::exit(1);
+    }
+   let editor=args.get(0);
+   let til_folder=args.get(1);
+   let repo_path = args.get(2);
+    
+   let conf:Config = Config{
+       editor:editor.expect("Editor choice is a must").to_string(), 
+       til_folder:til_folder.expect("Til folder is a must").to_string(), 
+       repo_path:repo_path.expect("Repo path is a must").to_string()}; 
+
+   let config_path = dirs::home_dir()
+       .expect("failed to find home dir")
+       .join(format!(".config/{}/config.json",APP_NAME))
+       ;
+
+    let confstr = to_string(&conf)?; 
+    std::fs::write(config_path,format!("{}", confstr))?;
+    Ok(())
+}
+
+fn create_default_files() -> io::Result<()> {
+    
+   let conf:Config = Config{editor:"nano".to_string(), til_folder:"contents/til".to_string(), repo_path:"~/www/project-name".to_string()}; 
+   let config_path = dirs::home_dir()
+       .expect("failed to find home dir")
+       .join(format!(".config/{}/config.json",APP_NAME))
+       ;
+
+    let confstr = to_string(&conf)?; 
+    std::fs::write(config_path,format!("{}", confstr))?;
+    println!("Configuration file updated");
+
+    Ok(())
 }
