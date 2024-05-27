@@ -1,7 +1,5 @@
-use std::env;
 use std::fs::{self,File};
 use std::io::{self,Write};
-use std::path::Path;
 use std::process::Command;
 use tempfile::NamedTempFile;
 use chrono::Local;
@@ -28,7 +26,7 @@ fn main() -> io::Result<()> {
     let Config { editor, til_folder, repo_path } = config;
     let full_til_path = format!("{}/{}",repo_path,til_folder);
 
-    let mut temp_file = NamedTempFile::new()?;
+    let temp_file = NamedTempFile::new()?;
     let temp_path = temp_file.path().to_str().unwrap().to_string();
 
     Command::new(editor)
@@ -37,13 +35,10 @@ fn main() -> io::Result<()> {
         .expect("Failed to open editor");
 
     let input_content = read_to_string(temp_path)?;
-    println!("Content is {}",&input_content);
 
     let new_file_name = get_next_file_name(&full_til_path)?;
-    println!("New file name is {}", &new_file_name);
 
     let new_file_path = format!("{}/{}", full_til_path, new_file_name);
-    println!("New file path is {}",&new_file_path);
 
     let prepend_path = dirs::home_dir()
         .expect("Failed to find home directory")
@@ -51,8 +46,6 @@ fn main() -> io::Result<()> {
 
     let prepend_template = read_to_string(prepend_path)?;
     let prepend_content = update_prepend_content(&prepend_template,&new_file_name)?;
-    println!("Prepend content is {}",&prepend_content);
-    println!("File is creating: {}",&new_file_path);
 
     let mut new_file = File::create(&new_file_path)?;
     write!(new_file,"{} \n {}", prepend_content, input_content)?;
