@@ -92,7 +92,7 @@ fn get_next_file_name(folder: &str) -> io::Result<String> {
 }
 
 fn update_prepend_content(template: &str, filename: &str) -> io::Result<String> {
-    let date = Local::now().format("%Y-%m-%dT%H:%M:%S%z").to_string();
+    let date = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let filename_wo_ext = filename.replace(".md","");
     let content = template
         .replace("$TITLE",&filename_wo_ext)
